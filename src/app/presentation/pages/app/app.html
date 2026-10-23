@@ -1,0 +1,393 @@
+@if (!usuario) {
+  <main class="acceso">
+    <section class="panel-acceso">
+      <a class="marca marca-acceso" href="/" aria-label="Inicio">
+        <span class="marca-icono">+</span>
+        <span>Cuenta Clara</span>
+      </a>
+      <p class="etiqueta">Gastos compartidos, sin líos</p>
+      <h1>{{ pantalla === 'entrar' ? 'Qué bueno verte' : 'Crea tu cuenta' }}</h1>
+      <p class="texto-suave">
+        {{ pantalla === 'entrar' ? 'Entra y revisa tus grupos y cuentas.' : 'Organiza los gastos con tus amigos.' }}
+      </p>
+
+      @if (error) {
+        <div class="aviso aviso-error" role="alert">{{ error }}</div>
+      }
+      @if (exito) {
+        <div class="aviso aviso-exito" role="status">{{ exito }}</div>
+      }
+
+      @if (pantalla === 'entrar') {
+        <form (ngSubmit)="iniciarSesion()">
+          <label for="email-acceso">Correo electrónico con el que te registraste</label>
+          <input id="email-acceso" name="email" type="email" [(ngModel)]="formularioAcceso.email" required autocomplete="email">
+          <label for="clave-acceso">Contraseña</label>
+          <input id="clave-acceso" name="password" type="password" [(ngModel)]="formularioAcceso.password" required autocomplete="current-password">
+          <button class="boton boton-principal boton-ancho" type="submit" [disabled]="cargando">
+            {{ cargando ? 'Entrando...' : 'Entrar' }}
+          </button>
+        </form>
+        <p class="cambio-pantalla">¿Aún no tienes cuenta? <button type="button" class="enlace" (click)="pantalla = 'registro'; limpiarAvisos()">Regístrate</button></p>
+      } @else {
+        <form (ngSubmit)="registrarse()">
+          <label for="nombre-completo">Nombre y apellidos</label>
+          <input id="nombre-completo" name="full_name" type="text" [(ngModel)]="formularioRegistro.full_name" required minlength="2" autocomplete="name">
+          <label for="nombre-usuario">Nombre de usuario</label>
+          <input id="nombre-usuario" name="username" type="text" [(ngModel)]="formularioRegistro.username" required minlength="3" autocomplete="username">
+          <label for="email-registro">Correo electrónico</label>
+          <input id="email-registro" name="email" type="email" [(ngModel)]="formularioRegistro.email" required autocomplete="email">
+          <label for="clave-registro">Contraseña</label>
+          <input id="clave-registro" name="password" type="password" [(ngModel)]="formularioRegistro.password" required minlength="8" autocomplete="new-password">
+          <button class="boton boton-principal boton-ancho" type="submit" [disabled]="cargando">
+            {{ cargando ? 'Creando cuenta...' : 'Crear cuenta' }}
+          </button>
+        </form>
+        <p class="cambio-pantalla">¿Ya tienes cuenta? <button type="button" class="enlace" (click)="pantalla = 'entrar'; limpiarAvisos()">Inicia sesión</button></p>
+      }
+    </section>
+    <aside class="acceso-lateral">
+      <div class="ilustracion-circulo circulo-uno"></div>
+      <div class="ilustracion-circulo circulo-dos"></div>
+      <div class="nota-ilustracion">
+        <span class="etiqueta etiqueta-clara">Tu dinero, en orden</span>
+        <h2>Los buenos momentos se comparten.<br>Las cuentas también.</h2>
+        <p>Crea un grupo, apunta los gastos y deja que las cuentas salgan solas.</p>
+      </div>
+    </aside>
+  </main>
+} @else {
+  <div class="aplicacion">
+    <aside class="barra-lateral">
+      <a class="marca" href="/" aria-label="Cuenta Clara, inicio" (click)="volverAInicio(); $event.preventDefault()">
+        <span class="marca-icono">+</span>
+        <span>Cuenta Clara</span>
+      </a>
+      <div class="seccion-menu">
+        <span class="titulo-menu">MENÚ</span>
+        <button class="elemento-menu" [class.elemento-activo]="!grupoActual" (click)="volverAInicio()">
+          <span class="menu-icono">⌂</span> Inicio
+        </button>
+        <button class="elemento-menu" [class.elemento-activo]="false" (click)="mostrarNuevoGrupo = !mostrarNuevoGrupo; grupoActual = null">
+          <span class="menu-icono">＋</span> Crear un grupo
+        </button>
+      </div>
+      <div class="seccion-menu">
+        <span class="titulo-menu">TUS GRUPOS</span>
+        @if (grupos.length) {
+          @for (grupo of grupos; track grupo.id) {
+            <button class="elemento-menu grupo-menu" [class.elemento-activo]="grupoActual?.id === grupo.id" (click)="abrirGrupo(grupo)">
+              <span class="punto-grupo"></span>{{ grupo.title }}
+            </button>
+          }
+        } @else {
+          <p class="texto-menu-vacio">Todavía no tienes grupos.</p>
+        }
+      </div>
+      <div class="usuario-lateral">
+        <span class="avatar">{{ usuario.full_name.charAt(0).toUpperCase() }}</span>
+        <span class="nombre-lateral">{{ usuario.full_name }}</span>
+        <button class="boton-salir" type="button" (click)="cerrarSesion()" aria-label="Cerrar sesión" title="Cerrar sesión">↗</button>
+      </div>
+    </aside>
+
+    <main class="contenido">
+      <header class="cabecera">
+        <div>
+          <span class="etiqueta">TU ESPACIO PERSONAL</span>
+          <h1>{{ grupoActual ? grupoActual.title : 'Hola, ' + usuario.full_name.split(' ')[0] }}</h1>
+        </div>
+        @if (!grupoActual) {
+          <button class="boton boton-principal" type="button" (click)="mostrarNuevoGrupo = !mostrarNuevoGrupo">
+            <span>＋</span> Nuevo grupo
+          </button>
+        }
+      </header>
+
+      @if (error) {
+        <div class="aviso aviso-error" role="alert">{{ error }} <button class="cerrar-aviso" (click)="error = ''" aria-label="Cerrar aviso">×</button></div>
+      }
+      @if (exito) {
+        <div class="aviso aviso-exito" role="status">{{ exito }} <button class="cerrar-aviso" (click)="exito = ''" aria-label="Cerrar aviso">×</button></div>
+      }
+
+      @if (cargando) {
+        <div class="cargando"><span class="punto-cargando"></span> Cargando...</div>
+      }
+
+      @if (mostrarNuevoGrupo && !grupoActual) {
+        <section class="tarjeta formulario-tarjeta">
+          <div class="titulo-tarjeta">
+            <div>
+              <span class="etiqueta">EMPECEMOS</span>
+              <h2>Crear un grupo</h2>
+            </div>
+            <button class="boton-cerrar" type="button" (click)="mostrarNuevoGrupo = false" aria-label="Cerrar">×</button>
+          </div>
+          <form class="formulario-grid" (ngSubmit)="crearGrupo()">
+            <div class="campo campo-completo">
+              <label for="titulo-grupo">Nombre del grupo</label>
+              <input id="titulo-grupo" name="title" type="text" placeholder="Por ejemplo: Viaje a Lisboa" [(ngModel)]="formularioGrupo.title" required minlength="2">
+            </div>
+            <div class="campo">
+              <label for="objetivo-grupo">¿Para qué es el grupo?</label>
+              <input id="objetivo-grupo" name="objective" type="text" placeholder="Vacaciones, piso compartido..." [(ngModel)]="formularioGrupo.objective" required minlength="2">
+            </div>
+            <div class="campo">
+              <label for="descripcion-grupo">Descripción</label>
+              <input id="descripcion-grupo" name="description" type="text" placeholder="Añade algunos detalles" [(ngModel)]="formularioGrupo.description" required minlength="2">
+            </div>
+            <div class="campo campo-completo">
+              <button class="boton boton-principal" type="submit" [disabled]="cargando">Crear grupo</button>
+            </div>
+          </form>
+        </section>
+      }
+
+      @if (!grupoActual) {
+        @if (invitacionesPendientes.length) {
+          <section class="bloque">
+            <div class="titulo-seccion">
+              <div>
+                <span class="etiqueta">PENDIENTE DE TI</span>
+                <h2>Invitaciones</h2>
+              </div>
+              <span class="contador">{{ invitacionesPendientes.length }}</span>
+            </div>
+            <div class="rejilla-invitaciones">
+              @for (invitacion of invitacionesPendientes; track invitacion.id) {
+                <article class="tarjeta invitacion-tarjeta">
+                  <div class="avatar avatar-suave">G</div>
+                  <div class="detalle-invitacion">
+                    <strong>Invitación al grupo #{{ invitacion.group_id }}</strong>
+                    <span>Enviada a {{ invitacion.recipient_email }}</span>
+                  </div>
+                  <div class="acciones-invitacion">
+                    <button class="boton boton-pequeno boton-principal" type="button" (click)="responderInvitacion(invitacion, 'accepted')">Aceptar</button>
+                    <button class="boton boton-pequeno boton-secundario" type="button" (click)="responderInvitacion(invitacion, 'rejected')">Rechazar</button>
+                  </div>
+                </article>
+              }
+            </div>
+          </section>
+        }
+
+        <section class="bloque">
+          <div class="titulo-seccion">
+            <div>
+              <span class="etiqueta">ORGANIZA Y COMPARTE</span>
+              <h2>Tus grupos</h2>
+            </div>
+            @if (grupos.length) {
+              <span class="contador">{{ grupos.length }}</span>
+            }
+          </div>
+          @if (grupos.length) {
+            <div class="rejilla-grupos">
+              @for (grupo of grupos; track grupo.id) {
+                <button class="tarjeta tarjeta-grupo" type="button" (click)="abrirGrupo(grupo)">
+                  <span class="icono-grupo">{{ grupo.title.charAt(0).toUpperCase() }}</span>
+                  <span class="grupo-card-info">
+                    <strong>{{ grupo.title }}</strong>
+                    <span>{{ grupo.objective }}</span>
+                    <span class="grupo-descripcion">{{ grupo.description }}</span>
+                  </span>
+                  <span class="flecha-grupo">→</span>
+                </button>
+              }
+            </div>
+          } @else if (!cargando) {
+            <div class="tarjeta vacio">
+              <span class="icono-vacio">＋</span>
+              <h3>Aún no hay grupos</h3>
+              <p>Crea el primer grupo para empezar a compartir gastos.</p>
+              <button class="boton boton-principal" type="button" (click)="mostrarNuevoGrupo = true">Crear mi primer grupo</button>
+            </div>
+          }
+        </section>
+      } @else {
+        <button class="enlace volver" type="button" (click)="volverAInicio()">← Volver a tus grupos</button>
+        <section class="grupo-resumen">
+          <div class="resumen-texto">
+            <span class="etiqueta">OBJETIVO DEL GRUPO</span>
+            <h2>{{ grupoActual.objective }}</h2>
+            <p>{{ grupoActual.description }}</p>
+          </div>
+          <div class="resumen-miembros">
+            <span class="etiqueta">INTEGRANTES</span>
+            <strong>{{ grupoActual.members?.length ?? 0 }}</strong>
+            <span>personas</span>
+          </div>
+          @if (esCreador()) {
+            <button class="boton boton-claro" type="button" (click)="mostrarInvitar = !mostrarInvitar">＋ Invitar persona</button>
+          }
+        </section>
+
+        @if (mostrarInvitar && esCreador()) {
+          <section class="tarjeta formulario-tarjeta formulario-corto">
+            <form class="formulario-linea" (ngSubmit)="invitar()">
+              <div class="campo">
+                <label for="email-invitacion">Correo de la persona que quieres invitar</label>
+                <input id="email-invitacion" name="emailInvitacion" type="email" placeholder="nombre@correo.com" [(ngModel)]="formularioInvitacion.email" required>
+              </div>
+              <button class="boton boton-principal" type="submit" [disabled]="cargando">Enviar invitación</button>
+            </form>
+          </section>
+        }
+
+        <div class="rejilla-datos">
+          <section class="tarjeta">
+            <div class="titulo-tarjeta">
+              <div>
+                <span class="etiqueta">RESUMEN</span>
+                <h2>Cuánto lleva cada persona</h2>
+              </div>
+            </div>
+            @if (saldos.length) {
+              <div class="tabla-contenedor">
+                <table>
+                  <thead><tr><th>Persona</th><th>Ha pagado</th><th>Le corresponde</th><th>Balance</th></tr></thead>
+                  <tbody>
+                    @for (saldo of saldos; track saldo.user_id) {
+                      <tr>
+                        <td><strong>{{ saldo.username }}</strong>@if (saldo.user_id === usuario.id) { <span class="tu">Tú</span> }</td>
+                        <td>{{ formatoDinero(saldo.total_paid) }}</td>
+                        <td>{{ formatoDinero(saldo.total_owed) }}</td>
+                        <td [class.balance-positivo]="saldo.balance >= 0" [class.balance-negativo]="saldo.balance < 0">
+                          {{ saldo.balance >= 0 ? '+' : '' }}{{ formatoDinero(saldo.balance) }}
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            } @else if (!cargando) {
+              <p class="texto-suave">Todavía no hay saldos para mostrar.</p>
+            }
+          </section>
+
+          <section class="tarjeta">
+            <div class="titulo-tarjeta">
+              <div>
+                <span class="etiqueta">EL EQUIPO</span>
+                <h2>Integrantes</h2>
+              </div>
+              @if (esCreador()) {
+                <button class="boton-icono" type="button" (click)="mostrarInvitar = !mostrarInvitar" title="Invitar persona">＋</button>
+              }
+            </div>
+            <div class="lista-miembros">
+              @for (miembro of grupoActual.members ?? []; track miembro.user_id) {
+                <div class="fila-miembro">
+                  <span class="avatar avatar-suave">{{ miembro.full_name.charAt(0).toUpperCase() }}</span>
+                  <span class="miembro-nombre"><strong>{{ miembro.full_name }}</strong><span>{{ miembro.username }}</span></span>
+                  @if (miembro.role === 'owner') { <span class="insignia">Creador</span> }
+                </div>
+              }
+            </div>
+          </section>
+        </div>
+
+        <section class="tarjeta bloque-gastos">
+          <div class="titulo-tarjeta">
+            <div>
+              <span class="etiqueta">MOVIMIENTOS</span>
+              <h2>Gastos del grupo</h2>
+            </div>
+            @if (esCreador()) {
+              <button class="boton boton-principal" type="button" (click)="mostrarNuevoGasto = !mostrarNuevoGasto">＋ Añadir gasto</button>
+            }
+          </div>
+
+          @if (mostrarNuevoGasto && esCreador()) {
+            <form class="formulario-grid formulario-gasto" (ngSubmit)="registrarGasto()">
+              <div class="campo">
+                <label for="nombre-gasto">Nombre del gasto</label>
+                <input id="nombre-gasto" name="titleGasto" type="text" [(ngModel)]="formularioGasto.title" required minlength="2" placeholder="Compra del supermercado">
+              </div>
+              <div class="campo">
+                <label for="cantidad-gasto">Importe total (€)</label>
+                <input id="cantidad-gasto" name="cantidadGasto" type="number" min="0.01" step="0.01" [(ngModel)]="formularioGasto.amount" required>
+              </div>
+              <div class="campo">
+                <label for="categoria-gasto">Categoría</label>
+                <input id="categoria-gasto" name="categoriaGasto" type="text" [(ngModel)]="formularioGasto.category" placeholder="Comida, transporte...">
+              </div>
+              <div class="campo">
+                <label for="pagador-gasto">¿Quién lo ha pagado?</label>
+                <select id="pagador-gasto" name="pagadorGasto" [(ngModel)]="formularioGasto.paid_by_id" required>
+                  @for (miembro of grupoActual.members ?? []; track miembro.user_id) {
+                    <option [ngValue]="miembro.user_id">{{ miembro.full_name }}</option>
+                  }
+                </select>
+              </div>
+              <div class="campo campo-completo">
+                <label for="descripcion-gasto">Descripción (opcional)</label>
+                <input id="descripcion-gasto" name="descripcionGasto" type="text" [(ngModel)]="formularioGasto.description" placeholder="Detalles del gasto">
+              </div>
+              <div class="campo campo-completo">
+                <span class="label-reparto">Reparto del gasto <span>La suma debe ser 100 %</span></span>
+                <div class="reparto-lista">
+                  @for (miembro of grupoActual.members ?? []; track miembro.user_id) {
+                    <label class="reparto-fila">
+                      <span>{{ miembro.full_name }}</span>
+                      <span class="entrada-porcentaje"><input [name]="'parte-' + miembro.user_id" type="number" min="0" max="100" step="0.01" [(ngModel)]="reparto[miembro.user_id]"><span>%</span></span>
+                    </label>
+                  }
+                </div>
+              </div>
+              <div class="campo campo-completo botones-formulario">
+                <button class="boton boton-secundario" type="button" (click)="mostrarNuevoGasto = false">Cancelar</button>
+                <button class="boton boton-principal" type="submit" [disabled]="cargando">Guardar gasto</button>
+              </div>
+            </form>
+          }
+
+          @if (gastos.length) {
+            <div class="lista-gastos">
+              @for (gasto of gastos; track gasto.id) {
+                <article class="fila-gasto">
+                  <span class="icono-gasto">{{ gasto.category ? gasto.category.charAt(0).toUpperCase() : '€' }}</span>
+                  <span class="gasto-info"><strong>{{ gasto.title }}</strong><span>{{ gasto.category || 'Gasto' }} · Pagado por {{ gasto.paid_by_username || 'un integrante' }}</span></span>
+                  <span class="gasto-partes">
+                    @for (parte of gasto.shares; track parte.user_id) {
+                      <span>{{ nombreMiembro(parte.user_id) }}: {{ formatoDinero(parte.amount_due) }}</span>
+                    }
+                  </span>
+                  <strong class="gasto-total">{{ formatoDinero(gasto.amount) }}</strong>
+                </article>
+              }
+            </div>
+          } @else if (!cargando) {
+            <div class="vacio-pequeno"><p>Aún no se han apuntado gastos en este grupo.</p></div>
+          }
+        </section>
+
+        <section class="tarjeta bloque-mensajes">
+          <div class="titulo-tarjeta">
+            <div>
+              <span class="etiqueta">EN CONTACTO</span>
+              <h2>Mensajes del grupo</h2>
+            </div>
+          </div>
+          <div class="lista-mensajes">
+            @if (mensajes.length) {
+              @for (mensaje of mensajes; track mensaje.id) {
+                <article class="mensaje" [class.mensaje-propio]="mensaje.sender_id === usuario.id">
+                  <span class="avatar avatar-mini">{{ mensaje.username.charAt(0).toUpperCase() }}</span>
+                  <div><strong>{{ mensaje.username }}</strong><p>{{ mensaje.content }}</p></div>
+                </article>
+              }
+            } @else {
+              <p class="texto-suave">Aún no hay mensajes. ¡Di hola al grupo!</p>
+            }
+          </div>
+          <form class="formulario-mensaje" (ngSubmit)="enviarMensaje()">
+            <input name="mensaje" type="text" maxlength="2000" placeholder="Escribe un mensaje..." [(ngModel)]="textoMensaje" required>
+            <button class="boton boton-principal" type="submit" [disabled]="!textoMensaje.trim()">Enviar</button>
+          </form>
+        </section>
+      }
+    </main>
+  </div>
+}
