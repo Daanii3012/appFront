@@ -1,12 +1,12 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
-import { AutenticacionCasosUso } from '../../../application/use-cases/autenticacion.casos-uso';
-import { GruposCasosUso } from '../../../application/use-cases/grupos.casos-uso';
-import { Gasto } from '../../../domain/models/gasto.model';
-import { Grupo, Invitacion, Saldo } from '../../../domain/models/grupo.model';
-import { Mensaje } from '../../../domain/models/mensaje.model';
-import { Usuario } from '../../../domain/models/usuario.model';
+import { AutenticacionService } from '../../services/autenticacion.service';
+import { GruposService } from '../../services/grupos.service';
+import { Gasto } from '../../models/gasto.model';
+import { Grupo, Invitacion, Saldo } from '../../models/grupo.model';
+import { Mensaje } from '../../models/mensaje.model';
+import { Usuario } from '../../models/usuario.model';
 
 @Component({
   selector: 'app-root',
@@ -15,8 +15,8 @@ import { Usuario } from '../../../domain/models/usuario.model';
   styleUrl: './app.css'
 })
 export class App implements OnInit {
-  private readonly autenticacion = inject(AutenticacionCasosUso);
-  private readonly gruposUso = inject(GruposCasosUso);
+  private readonly autenticacion = inject(AutenticacionService);
+  private readonly gruposUso = inject(GruposService);
 
   usuario: Usuario | null = null;
   grupos: Grupo[] = [];

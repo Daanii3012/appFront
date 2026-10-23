@@ -16,7 +16,7 @@ npm start
 
 Abre [http://localhost:4200](http://localhost:4200) en el navegador.
 
-La dirección de la API se configura en `src/app/infrastructure/configuracion.ts`. Si el backend usa otra dirección, cambia el valor de `urlApi`.
+La dirección de la API se configura en `src/environments/environment.ts`. Si el backend usa otra dirección, cambia el valor de `urlApi`.
 
 ## Iniciar el backend
 
@@ -40,27 +40,22 @@ El backend debe permitir los orígenes locales `http://localhost:4200` y `http:/
 
 Solo el creador ve las opciones para invitar integrantes y registrar gastos. El cobro del dinero se realiza fuera de la aplicación.
 
-## Estructura del proyecto
-
-El código está separado por responsabilidades siguiendo Clean Architecture:
+## Estructura del frontend Angular
 
 ```text
-src/app/
-├── domain/
+src/
+├── app/
+│   ├── components/
+│   │   └── app/                 # Pantalla principal, plantilla y estilos
 │   ├── models/                  # Tipos de usuario, grupo, gasto y mensaje
-│   └── repositories/            # Contratos que necesita la aplicación
-├── application/
-│   └── use-cases/               # Acciones de autenticación y gestión de grupos
-├── infrastructure/
-│   ├── api/                     # Adaptadores HTTP para FastAPI
-│   ├── interceptors/            # Interceptor para enviar el token
-│   └── configuracion.ts         # Dirección del backend
-├── presentation/
-│   └── pages/app/               # Pantalla, plantilla y estilos de Angular
-└── app.config.ts                # Composición de dependencias de Angular
+│   ├── services/                # Llamadas a FastAPI y token de sesión
+│   ├── app.config.ts            # Configuración de Angular
+│   └── app.routes.ts            # Rutas de la aplicación
+└── environments/
+    └── environment.ts          # Dirección del backend
 ```
 
-La capa `presentation` conoce los casos de uso, pero no realiza peticiones HTTP. Los casos de uso dependen de contratos de `domain` y `infrastructure` los conecta con FastAPI; así se puede sustituir el backend sin reescribir las pantallas.
+`components` contiene la interfaz, `services` centraliza la comunicación con la API y `models` describe los datos intercambiados. `environment.ts` guarda la URL base de FastAPI.
 
 ## Comprobar la compilación
 
